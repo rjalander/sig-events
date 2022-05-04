@@ -9,6 +9,7 @@ declare KEPTN_CDF_TRANSLATOR_PATH CDF_EVENTS_KEPTN_ADAPTER_PATH KEPTN_PROJECT KE
 declare BROKER_NAME
 
 export KO_DOCKER_REPO=kind.local
+GOPATH="/home/est-selfservice/rjalander"
 
 # This script deploys all the software components required for the PoC
 # on a local laptop running docker.
@@ -98,7 +99,7 @@ if [ -z "$TEKTON_DASHBOARD_VERSION" ]; then
   TEKTON_DASHBOARD_VERSION=$(get_latest_release tektoncd/dashboard)
 fi
 
-KNATIVE_VERSION=${KNATIVE_VERSION:-0.24.0}
+KNATIVE_VERSION=${KNATIVE_VERSION:-1.3.0}
 
 echo "Checking if needed repos can be found"
 if [ ! -d "${KEPTN_CDF_TRANSLATOR_PATH:-${GOPATH}/src/github.com/salaboy/keptn-cdf-translator}" ]
