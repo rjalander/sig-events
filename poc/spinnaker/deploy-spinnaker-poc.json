@@ -33,7 +33,7 @@
        "spec": {
         "containers": [
          {
-          "image": "localhost:5000/cdevents/cdevents-spinnaker-poc",
+          "image": "localhost:5000/cdevent/poc:v1.0",
           "name": "cdevents-spinnaker-poc",
           "ports": [
            {
