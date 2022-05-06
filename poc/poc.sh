@@ -9,7 +9,7 @@ declare KEPTN_CDF_TRANSLATOR_PATH CDF_EVENTS_KEPTN_ADAPTER_PATH KEPTN_PROJECT KE
 declare BROKER_NAME
 
 export KO_DOCKER_REPO=kind.local
-GOPATH="/home/est-selfservice/rjalander"
+GOPATH="/home/est-selfservice/"
 
 # This script deploys all the software components required for the PoC
 # on a local laptop running docker.

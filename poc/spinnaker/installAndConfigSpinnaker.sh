@@ -15,7 +15,7 @@ set -e -o pipefail
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 ## Declare variables
-GIT_PATH_SIGEVENTS="~/sig-events"
+GIT_PATH_SIGEVENTS=~/sig-events
 
 ## functions
 function installHelm() {
@@ -26,7 +26,7 @@ function installHelm() {
 }
 
 function installHalyard() {
-    curl --silent https://raw.githubusercontent.com/spinnaker/halyard/master/install/debian/InstallHalyard.sh
+    curl -O https://raw.githubusercontent.com/spinnaker/halyard/master/install/debian/InstallHalyard.sh
     sudo bash InstallHalyard.sh
     hal -v > /dev/null
 }
@@ -39,6 +39,7 @@ function installSpinCLI () {
 }
 
 function installMinioService() {
+    helm repo add minio https://helm.min.io/
     helm install my-release minio/minio
 
     ACCESS_KEY=$(kubectl get secret -n default my-release-minio -o jsonpath="{.data.accesskey}" | base64 --decode)
@@ -70,8 +71,8 @@ function installSpinnaker() {
     hal deploy apply
 
     kubectl delete svc spin-echo -n spinnaker
-    mkdir -p ~/dev/spinnaker
-    git clone git@github.com:rjalander/echo.git -b cdevent_consume ~/dev/spinnaker
+    mkdir -p ~/dev/spinnaker/echo
+    git clone git@github.com:rjalander/echo.git -b cdevent_consume ~/dev/spinnaker/echo
     cd ~/dev/spinnaker/echo
     ln ~/.hal/default/staging/echo.yml ./echo.yml
     ln ~/.hal/default/staging/spinnaker.yml ./spinnaker.yml
@@ -79,7 +80,6 @@ function installSpinnaker() {
     docker push localhost:5000/cdevents/spinnaker-echo-poc:latest
 
     cd $GIT_PATH_SIGEVENTS/poc/spinnaker
-    kubectl delete -f spin-echo-deploy.yaml
     kubectl apply -f spin-echo-deploy.yaml
 
 }
