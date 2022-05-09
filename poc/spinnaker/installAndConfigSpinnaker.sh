@@ -41,10 +41,13 @@ function installSpinCLI () {
 function installMinioService() {
     helm repo add minio https://helm.min.io/
     helm install my-release minio/minio
+    echo "Sleep for 10Sec to initialize MINIO_END_POINT"
+    sleep 10
 
     ACCESS_KEY=$(kubectl get secret -n default my-release-minio -o jsonpath="{.data.accesskey}" | base64 --decode)
     SECRET_KEY=$(kubectl get secret -n default my-release-minio -o jsonpath="{.data.secretkey}" | base64 --decode)
     MINIO_END_POINT=$(kubectl get endpoints my-release-minio -n default | grep my-release-minio | awk '{print $2}')
+    echo "MINIO_END_POINT ==> $MINIO_END_POINT"
 
     echo $SECRET_KEY | \
          hal config storage s3 edit --endpoint http://$MINIO_END_POINT \
