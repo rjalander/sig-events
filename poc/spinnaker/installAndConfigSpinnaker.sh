@@ -15,7 +15,7 @@ set -e -o pipefail
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 ## Declare variables
-GIT_PATH_SIGEVENTS=~/sig-events
+GIT_PATH_SIGEVENTS=$BASE_DIR/../../
 SPIN_ECHO_GIT_URL="git@github.com:rjalander/echo.git -b cdevent_consume"
 
 ## functions
