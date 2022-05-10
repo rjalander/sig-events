@@ -16,6 +16,7 @@ BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 ## Declare variables
 GIT_PATH_SIGEVENTS=~/sig-events
+SPIN_ECHO_GIT_URL="git@github.com:rjalander/echo.git -b cdevent_consume"
 
 ## functions
 function installHelm() {
@@ -40,14 +41,25 @@ function installSpinCLI () {
 
 function installMinioService() {
     helm repo add minio https://helm.min.io/
-    helm install my-release minio/minio
-    echo "Sleep for 10Sec to initialize MINIO_END_POINT"
-    sleep 10
+    helm install my-release minio/minio || true
 
     ACCESS_KEY=$(kubectl get secret -n default my-release-minio -o jsonpath="{.data.accesskey}" | base64 --decode)
     SECRET_KEY=$(kubectl get secret -n default my-release-minio -o jsonpath="{.data.secretkey}" | base64 --decode)
     MINIO_END_POINT=$(kubectl get endpoints my-release-minio -n default | grep my-release-minio | awk '{print $2}')
-    echo "MINIO_END_POINT ==> $MINIO_END_POINT"
+
+    count=0
+    max_count=10
+    echo "Check minio endpoint is configured."
+    while [ $count -lt $max_count ]; do
+        echo "MINIO_END_POINT ==> $MINIO_END_POINT"
+        if [[ $MINIO_END_POINT != "none" ]]; then
+            break
+        fi
+        count=$[$count +1]
+        echo "Sleep for 5Sec before next attempt."
+        sleep 5
+        MINIO_END_POINT=$(kubectl get endpoints my-release-minio -n default | grep my-release-minio | awk '{print $2}')
+    done
 
     echo $SECRET_KEY | \
          hal config storage s3 edit --endpoint http://$MINIO_END_POINT \
@@ -65,18 +77,22 @@ function configureK8SAccountWithSpinnaker() {
     K8S_ACCOUNT=poc-k8s-account
     hal config provider kubernetes account add $K8S_ACCOUNT \
         --provider-version v2 \
-        --context $(kubectl config current-context)
+        --context $(kubectl config current-context) || true
     hal config deploy edit --type distributed --account-name $K8S_ACCOUNT
 }
 
 function installSpinnaker() {
     hal config version edit --version 1.26.6
     hal deploy apply
+    echo "Sleep for 20Sec to initialize spinnaker micro services"
+    sleep 20
 
     kubectl delete svc spin-echo -n spinnaker
+    rm -rf ~/dev/spinnaker/echo
     mkdir -p ~/dev/spinnaker/echo
-    git clone git@github.com:rjalander/echo.git -b cdevent_consume ~/dev/spinnaker/echo
+    git clone $SPIN_ECHO_GIT_URL ~/dev/spinnaker/echo
     cd ~/dev/spinnaker/echo
+    rm -rf ./echo.yml ./spinnaker.yml
     ln ~/.hal/default/staging/echo.yml ./echo.yml
     ln ~/.hal/default/staging/spinnaker.yml ./spinnaker.yml
     ./gradlew echo-web:installDist -x test && docker build -f Dockerfile.slim --tag localhost:5000/cdevents/spinnaker-echo-poc .
@@ -84,11 +100,13 @@ function installSpinnaker() {
 
     cd $GIT_PATH_SIGEVENTS/poc/spinnaker
     kubectl apply -f spin-echo-deploy.yaml
+    echo "Sleep for 20Sec to initialize spinnaker poc echo service"
+    sleep 20
 
 }
 
 function createTriggerToSubscribeSpinnakerEvent() {
-kubectl create -f - <<EOF
+kubectl create -f - <<EOF || true
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
@@ -104,16 +122,34 @@ EOF
 }
 
 function createApplicationAndPipeline() {
+    ## Run hal deploy connect with nohup - before pipeline creation..
+    nohup hal deploy connect &
+    count=0
+    max_count=10
+    echo "Check Spinnaker API gateway is running."
+    while [ $count -lt $max_count ]; do
+        sudo netstat -tulpn | grep 8084
+        if [[ $? -eq 0 ]]; then
+            break
+        fi
+        count=$[$count +1]
+        echo "Sleep for 5Sec before next attempt."
+        sleep 5
+    done
 
-    sudo netstat -tulpn | grep 8084 &&
-        echo "Spinnaker API gateway is running, proceeding with pipeline creation." ||
-        echo "Spinnaker API gateway is NOT running, please run 'hal deploy connect' and 'source ./installAndConfigSpinnaker.sh && createApplicationAndPipeline'"
-
-    ##** Run hal deploy connect - from the VM before pipeline creation..
-    spin application save --application-name cdevents-poc --owner-email someone@example.com --cloud-providers "kubernetes"
-    cd $GIT_PATH_SIGEVENTS/poc/spinnaker
-    spin pipeline save -f deploy-spinnaker-poc.json
-    echo "Spinnaker Application and Pipeline created successfully"
+    sudo netstat -tulpn | grep 8084 && ( 
+        echo "Spinnaker API gateway is running, proceeding with pipeline creation." 
+            ##** Run hal deploy connect - from the VM before pipeline creation..
+        spin application save --application-name cdevents-poc --owner-email someone@example.com --cloud-providers "kubernetes"
+        cd $GIT_PATH_SIGEVENTS/poc/spinnaker
+        spin pipeline save -f deploy-spinnaker-poc.json
+        echo "Spinnaker Application and Pipeline created successfully" ) || (
+        echo "Spinnaker API gateway is NOT running, please run 'nohup hal deploy connect' and run the below commands to create the pipeline"
+        echo "-------------------------------------------"
+        echo "spin application save --application-name cdevents-poc --owner-email someone@example.com --cloud-providers "kubernetes""
+        echo "cd $GIT_PATH_SIGEVENTS/poc/spinnaker"
+        echo "spin pipeline save -f deploy-spinnaker-poc.json" 
+        echo "-------------------------------------------" )
 }
 
 ########
