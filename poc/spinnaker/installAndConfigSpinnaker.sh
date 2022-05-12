@@ -52,7 +52,7 @@ function installMinioService() {
     echo "Check minio endpoint is configured."
     while [ $count -lt $max_count ]; do
         echo "MINIO_END_POINT ==> $MINIO_END_POINT"
-        if [[ $MINIO_END_POINT != "none" ]]; then
+        if [[ $MINIO_END_POINT != "<none>" ]]; then
             break
         fi
         count=$[$count +1]
