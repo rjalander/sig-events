@@ -60,6 +60,10 @@ function installMinioService() {
         sleep 5
         MINIO_END_POINT=$(kubectl get endpoints my-release-minio -n default | grep my-release-minio | awk '{print $2}')
     done
+    if [[ $MINIO_END_POINT == "<none>" ]]; then
+            echo "Unable to get the minio endpoint - $MINIO_END_POINT"
+            exit 1
+    fi
 
     echo $SECRET_KEY | \
          hal config storage s3 edit --endpoint http://$MINIO_END_POINT \
@@ -99,6 +103,7 @@ function installSpinnaker() {
     docker push localhost:5000/cdevents/spinnaker-echo-poc:latest
 
     cd $GIT_PATH_SIGEVENTS/poc/spinnaker
+    kubectl delete -f spin-echo-deploy.yaml || true
     kubectl apply -f spin-echo-deploy.yaml
     echo "Sleep for 20Sec to initialize spinnaker poc echo service"
     sleep 20
@@ -144,7 +149,7 @@ function createApplicationAndPipeline() {
         cd $GIT_PATH_SIGEVENTS/poc/spinnaker
         spin pipeline save -f deploy-spinnaker-poc.json
         echo "Spinnaker Application and Pipeline created successfully" ) || (
-        echo "Spinnaker API gateway is NOT running, please run 'nohup hal deploy connect' and run the below commands to create the pipeline"
+        echo "Spinnaker API gateway is NOT running, please run 'nohup hal deploy connect &' and run the below commands to create the pipeline"
         echo "-------------------------------------------"
         echo "spin application save --application-name cdevents-poc --owner-email someone@example.com --cloud-providers "kubernetes""
         echo "cd $GIT_PATH_SIGEVENTS/poc/spinnaker"
