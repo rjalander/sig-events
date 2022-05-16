@@ -3,13 +3,13 @@
 set -e -o pipefail
 
 ## This script is used for the following actions
-## 1. Install halyard and verify the version 
+## 1. Install helm, halyard and spincli latest versions 
 ## 2. Install Minio Server as service in k8s cluster and configure as storage service for spinnaker
 ## 3. Configure kubernetes account with spinnaker
 ## 4. Install spinnaker using halyard command
-##
-##
-##
+## 5. Create a trigger to subscribe spinnaker event API
+## 6. Launch spinnaker deployment and create Application/Pipeline using spincli
+## 7. Create Ingress to access spinnaker UI from host
 
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -91,7 +91,6 @@ function installSpinnaker() {
     echo "Sleep for 20Sec to initialize spinnaker micro services"
     sleep 20
 
-    kubectl delete svc spin-echo -n spinnaker
     rm -rf ~/dev/spinnaker/echo
     mkdir -p ~/dev/spinnaker/echo
     git clone $SPIN_ECHO_GIT_URL ~/dev/spinnaker/echo
@@ -157,6 +156,30 @@ function createApplicationAndPipeline() {
         echo "-------------------------------------------" )
 }
 
+function createIngressSpinnakerUI() {
+kubectl create -f - <<EOF || true
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spinnaker-ui
+  namespace: spinnaker
+  annotations:
+    kubernetes.io/ingress.class: "contour-external"
+spec:
+  rules:
+  - host: spin-ui-127.0.0.1.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: spin-deck
+            port:
+              number: 9000
+EOF
+}
+
 ########
 ## Main
 #######
@@ -169,4 +192,5 @@ configureK8SAccountWithSpinnaker
 installSpinnaker
 createTriggerToSubscribeSpinnakerEvent
 createApplicationAndPipeline
+createIngressSpinnakerUI
 exit 0
