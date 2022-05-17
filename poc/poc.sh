@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 set -e -o pipefail
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -9,7 +10,7 @@ declare KEPTN_CDF_TRANSLATOR_PATH CDF_EVENTS_KEPTN_ADAPTER_PATH KEPTN_PROJECT KE
 declare BROKER_NAME
 
 export KO_DOCKER_REPO=kind.local
-GOPATH="/home/est-selfservice/"
+GOPATH=$HOME
 
 # This script deploys all the software components required for the PoC
 # on a local laptop running docker.
@@ -90,13 +91,16 @@ shift $((OPTIND -1))
 export KIND_CLUSTER_NAME=${CLUSTER_NAME:-"cde"}
 
 if [ -z "$TEKTON_PIPELINE_VERSION" ]; then
-  TEKTON_PIPELINE_VERSION=$(get_latest_release tektoncd/pipeline)
+  TEKTON_PIPELINE_VERSION="v0.35.0"
+ # $(get_latest_release tektoncd/pipeline)
 fi
 if [ -z "$TEKTON_TRIGGERS_VERSION" ]; then
-  TEKTON_TRIGGERS_VERSION=$(get_latest_release tektoncd/triggers)
+  TEKTON_TRIGGERS_VERSION="v0.19.1"
+  #$(get_latest_release tektoncd/triggers)
 fi
 if [ -z "$TEKTON_DASHBOARD_VERSION" ]; then
-  TEKTON_DASHBOARD_VERSION=$(get_latest_release tektoncd/dashboard)
+  TEKTON_DASHBOARD_VERSION="v0.25.0"
+  #$(get_latest_release tektoncd/dashboard)
 fi
 
 KNATIVE_VERSION=${KNATIVE_VERSION:-1.3.0}
@@ -156,7 +160,7 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
     kubeadmConfigPatches:
     - |
       kind: InitConfiguration
@@ -171,9 +175,9 @@ nodes:
         hostPort: 443
         protocol: TCP
   - role: worker
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
   - role: worker
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
 featureGates:
   "EphemeralContainers": true
 containerdConfigPatches:

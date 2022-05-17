@@ -3,13 +3,13 @@
 set -e -o pipefail
 
 ## This script is used for the following actions
-## 1. Install halyard and verify the version 
+## 1. Install helm, halyard and spincli latest versions 
 ## 2. Install Minio Server as service in k8s cluster and configure as storage service for spinnaker
 ## 3. Configure kubernetes account with spinnaker
 ## 4. Install spinnaker using halyard command
-##
-##
-##
+## 5. Create a trigger to subscribe spinnaker event API
+## 6. Launch spinnaker deployment and create Application/Pipeline using spincli
+## 7. Create Ingress to access spinnaker UI from host
 
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -60,6 +60,10 @@ function installMinioService() {
         sleep 5
         MINIO_END_POINT=$(kubectl get endpoints my-release-minio -n default | grep my-release-minio | awk '{print $2}')
     done
+    if [[ $MINIO_END_POINT == "<none>" ]]; then
+            echo "Unable to get the minio endpoint - $MINIO_END_POINT"
+            exit 1
+    fi
 
     echo $SECRET_KEY | \
          hal config storage s3 edit --endpoint http://$MINIO_END_POINT \
@@ -87,7 +91,6 @@ function installSpinnaker() {
     echo "Sleep for 20Sec to initialize spinnaker micro services"
     sleep 20
 
-    kubectl delete svc spin-echo -n spinnaker
     rm -rf ~/dev/spinnaker/echo
     mkdir -p ~/dev/spinnaker/echo
     git clone $SPIN_ECHO_GIT_URL ~/dev/spinnaker/echo
@@ -99,6 +102,7 @@ function installSpinnaker() {
     docker push localhost:5000/cdevents/spinnaker-echo-poc:latest
 
     cd $GIT_PATH_SIGEVENTS/poc/spinnaker
+    kubectl delete -f spin-echo-deploy.yaml || true
     kubectl apply -f spin-echo-deploy.yaml
     echo "Sleep for 20Sec to initialize spinnaker poc echo service"
     sleep 20
@@ -144,12 +148,36 @@ function createApplicationAndPipeline() {
         cd $GIT_PATH_SIGEVENTS/poc/spinnaker
         spin pipeline save -f deploy-spinnaker-poc.json
         echo "Spinnaker Application and Pipeline created successfully" ) || (
-        echo "Spinnaker API gateway is NOT running, please run 'nohup hal deploy connect' and run the below commands to create the pipeline"
+        echo "Spinnaker API gateway is NOT running, please run 'nohup hal deploy connect &' and run the below commands to create the pipeline"
         echo "-------------------------------------------"
         echo "spin application save --application-name cdevents-poc --owner-email someone@example.com --cloud-providers "kubernetes""
         echo "cd $GIT_PATH_SIGEVENTS/poc/spinnaker"
         echo "spin pipeline save -f deploy-spinnaker-poc.json" 
         echo "-------------------------------------------" )
+}
+
+function createIngressSpinnakerUI() {
+kubectl create -f - <<EOF || true
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: spinnaker-ui
+  namespace: spinnaker
+  annotations:
+    kubernetes.io/ingress.class: "contour-external"
+spec:
+  rules:
+  - host: spin-ui-127.0.0.1.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: spin-deck
+            port:
+              number: 9000
+EOF
 }
 
 ########
@@ -164,4 +192,5 @@ configureK8SAccountWithSpinnaker
 installSpinnaker
 createTriggerToSubscribeSpinnakerEvent
 createApplicationAndPipeline
+createIngressSpinnakerUI
 exit 0
