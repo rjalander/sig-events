@@ -389,6 +389,9 @@ spec:
     uri: http://el-cdevent-listener.cdevents:8080
 EOF
 
+## Run the script to install and configure Spinnaker with poc
+sudo bash $BASE_DIR/spinnaker/installAndConfigSpinnaker.sh
+
 # Echo relevant environment
 env | egrep '(KO|KIND|KEPTN|^TEKTON|BROKER|KNATIVE|reg_)' > poc.env
 
@@ -397,6 +400,7 @@ echo "Tekton Dashboard available at http://tekton-127.0.0.1.nip.io"
 echo "Keptn Bridge available at http://keptn-127.0.0.1.nip.io"
 echo "-> for the login creds, use keptn configure bridge -o"
 echo "CloudEvents player available at http://cloudevents-player.default.knative-127.0.0.1.nip.io"
+echo "Spinnaker UI available at http://localhost:9000"
 
 echo "To kick off the demo, from the poc folder, run tkn:"
 echo "tkn pipeline start build-artifact -w name=sources,volumeClaimTemplateFile=./tekton/workspace-template.yaml"
