@@ -107,7 +107,7 @@ function createApplicationAndPipeline() {
     ## Run hal deploy connect with nohup - before pipeline creation..
     nohup hal deploy connect &
     count=0
-    max_count=10
+    max_count=20
     echo "Check Spinnaker API gateway is running."
     while [ $count -lt $max_count ]; do
         sudo netstat -tulpn | grep 8084 && break
