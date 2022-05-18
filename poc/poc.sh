@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 set -e -o pipefail
 
 BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
@@ -94,16 +93,13 @@ shift $((OPTIND -1))
 export KIND_CLUSTER_NAME=${CLUSTER_NAME:-"cde"}
 
 if [ -z "$TEKTON_PIPELINE_VERSION" ]; then
-  TEKTON_PIPELINE_VERSION="v0.35.0"
- # $(get_latest_release tektoncd/pipeline)
+  TEKTON_PIPELINE_VERSION=$(get_latest_release tektoncd/pipeline)
 fi
 if [ -z "$TEKTON_TRIGGERS_VERSION" ]; then
-  TEKTON_TRIGGERS_VERSION="v0.19.1"
-  #$(get_latest_release tektoncd/triggers)
+  TEKTON_TRIGGERS_VERSION=$(get_latest_release tektoncd/triggers)
 fi
 if [ -z "$TEKTON_DASHBOARD_VERSION" ]; then
-  TEKTON_DASHBOARD_VERSION="v0.25.0"
-  #$(get_latest_release tektoncd/dashboard)
+  TEKTON_DASHBOARD_VERSION=$(get_latest_release tektoncd/dashboard)
 fi
 
 KNATIVE_VERSION=${KNATIVE_VERSION:-1.3.0}
@@ -166,7 +162,7 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
   - role: control-plane
-    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
     kubeadmConfigPatches:
     - |
       kind: InitConfiguration
@@ -181,9 +177,9 @@ nodes:
         hostPort: 443
         protocol: TCP
   - role: worker
-    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
   - role: worker
-    image: kindest/node:v1.23.0@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
 featureGates:
   "EphemeralContainers": true
 containerdConfigPatches:
@@ -410,7 +406,7 @@ echo "Tekton Dashboard available at http://tekton-127.0.0.1.nip.io"
 echo "Keptn Bridge available at http://keptn-127.0.0.1.nip.io"
 echo "-> for the login creds, use keptn configure bridge -o"
 echo "CloudEvents player available at http://cloudevents-player.default.knative-127.0.0.1.nip.io"
-echo "Spinnaker UI available at http://localhost:9000"
+echo "Spinnaker UI available at http://spin-ui-127.0.0.1.nip.io"
 
 echo "To kick off the demo, from the poc folder, run tkn:"
 echo "tkn pipeline start build-artifact -w name=sources,volumeClaimTemplateFile=./tekton/workspace-template.yaml"
