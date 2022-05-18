@@ -37,6 +37,9 @@ GOPATH=$HOME
 #   https://github.com/tektoncd/experimental - contains tekton cloudevent controller
 #   should be cloned under $GOROOT/src/github.com/<org>/<repo> or alternatively
 #   the corresponding PATH environment variables must be set (see the declare section above)
+# - Helm CLI (https://helm.sh/docs/intro/install/)
+# - Halyard CLI (https://spinnaker.io/docs/setup/install/halyard/)
+# - Spin CLI (https://spinnaker.io/docs/setup/other_config/spin/)
 
 # Notes:
 # - Latest versions will be installed if not specified
@@ -130,6 +133,9 @@ go version > /dev/null
 ko version > /dev/null
 kind version > /dev/null
 keptn > /dev/null
+helm version > /dev/null
+hal -v > /dev/null
+spin --version >> /dev/null
 
 echo "===> Creating a local Container Registry"
 # create registry container unless it already exists
