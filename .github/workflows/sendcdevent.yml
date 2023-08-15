@@ -1,0 +1,15 @@
+on: push
+name: Main Workflow
+jobs:
+  sendCDEvent:
+    name: Send CDEvent
+    runs-on: ubuntu-latest
+    steps:
+    - name: send CDEvent
+      uses: cdevents/github-action@main
+      with:
+        source: 'my/first/cdevent/program'
+        subject_id: 'myPipelineRun1'
+        subject_pipeline_name: 'myPipeline'
+        subject_url: 'https://example.com/myPipeline'
+        version: 0.0.1
