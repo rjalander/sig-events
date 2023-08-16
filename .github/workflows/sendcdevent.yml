@@ -6,10 +6,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: send CDEvent
-      uses: cdevents/github-action@main
+      uses: rjalander/github-action@main
       with:
-        source: 'my/first/cdevent/program'
-        subject_id: 'myPipelineRun1'
+        source: 'https://github.com/rjalander/sig-events'
+        subject_id: 'main'
         subject_pipeline_name: 'myPipeline'
         subject_url: 'https://example.com/myPipeline'
         version: 0.0.1
+        events_broker_url: 'http://10.101.1.48:8010/default/events-broker'
