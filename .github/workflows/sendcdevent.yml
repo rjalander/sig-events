@@ -16,4 +16,4 @@ jobs:
         subject_pipeline_name: 'myPipeline'
         subject_url: 'https://example.com/myPipeline'
         version: 0.0.1
-        events_broker_url: 'http://10.101.1.48:8010/default/events-broker'
+        args: 'http://10.101.1.48:8010/default/events-broker'
