@@ -7,7 +7,7 @@ declare TEKTON_PIPELINE_VERSION TEKTON_TRIGGERS_VERSION TEKTON_DASHBOARD_VERSION
 declare KNATIVE_VERSION KNATIVE_NET_CONTOUR_VERSION KNATIVE_EVENTING_VERSION
 declare KEPTN_CDF_TRANSLATOR_PATH CDF_EVENTS_KEPTN_ADAPTER_PATH KEPTN_PROJECT KEPTN_SERVICE
 declare BROKER_NAME
-
+GOPATH="/home/ubuntu/"
 export KO_DOCKER_REPO=kind.local
 
 # This script deploys all the software components required for the PoC
@@ -114,19 +114,19 @@ fi
 KNATIVE_VERSION=${KNATIVE_VERSION:-1.3.0}
 
 echo "Checking if needed repos can be found"
-if [ ! -d "${KEPTN_CDF_TRANSLATOR_PATH:-${GOPATH}/src/github.com/salaboy/keptn-cdf-translator}" ]
+if [ ! -d "${KEPTN_CDF_TRANSLATOR_PATH:-${GOPATH}/src/github.com/keptn-cdf-translator}" ]
 then
     echo "Can not find required repo: github.com/salaboy/keptn-cdf-translator"
     exit 1 # die with error code 1
 fi
 
-if [ ! -d "${CDF_EVENTS_KEPTN_ADAPTER_PATH:-${GOPATH}/src/github.com/salaboy/cdf-events-keptn-adapter}" ]
+if [ ! -d "${CDF_EVENTS_KEPTN_ADAPTER_PATH:-${GOPATH}/src/github.com/cdf-events-keptn-adapter}" ]
 then
     echo "Can not find required repo: github.com/salaboy/cdf-events-keptn-adapter"
     exit 1 # die with error code 1
 fi
 
-if [ ! -d "${TEKTON_CLOUDEVENTS_PATH:-${GOPATH}/src/github.com/tektoncd/experimental/cloudevents}" ]
+if [ ! -d "${TEKTON_CLOUDEVENTS_PATH:-${GOPATH}/src/github.com/experimental/cloudevents}" ]
 then
     echo "Can not find required repo: github.com/tektoncd/experimental/cloudevents"
     exit 1 # die with error code 1
@@ -169,9 +169,12 @@ if [ "${running_cluster}" != "$KIND_CLUSTER_NAME" ]; then
  cat <<EOF | kind create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  ipFamily: ipv4
+  apiServerAddress: 10.101.1.48
 nodes:
   - role: control-plane
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:49824ab1727c04e56a21a5d8372a402fcd32ea51ac96a2706a12af38934f81ac
     kubeadmConfigPatches:
     - |
       kind: InitConfiguration
@@ -186,9 +189,9 @@ nodes:
         hostPort: 443
         protocol: TCP
   - role: worker
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:49824ab1727c04e56a21a5d8372a402fcd32ea51ac96a2706a12af38934f81ac
   - role: worker
-    image: kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6
+    image: kindest/node:v1.23.0@sha256:49824ab1727c04e56a21a5d8372a402fcd32ea51ac96a2706a12af38934f81ac
 featureGates:
   "EphemeralContainers": true
 containerdConfigPatches:
@@ -255,6 +258,10 @@ spec:
               number: 9097
 EOF
 
+export TEKTON_PIPELINE_VERSION=v0.32.1
+export TEKTON_TRIGGERS_VERSION=v0.18.0
+export TEKTON_DASHBOARD_VERSION=v0.24.1
+
 echo export TEKTON_PIPELINE_VERSION="$TEKTON_PIPELINE_VERSION"
 echo export TEKTON_TRIGGERS_VERSION="$TEKTON_TRIGGERS_VERSION"
 echo export TEKTON_DASHBOARD_VERSION="$TEKTON_DASHBOARD_VERSION"
@@ -318,13 +325,13 @@ echo "keptn configure bridge -o"
 export GO111MODULE=on
 
 echo "===> Install Keptn Inboud"
-KEPTN_CDF_TRANSLATOR_PATH=${KEPTN_CDF_TRANSLATOR_PATH:-${GOPATH}/src/github.com/salaboy/keptn-cdf-translator}
+KEPTN_CDF_TRANSLATOR_PATH=${KEPTN_CDF_TRANSLATOR_PATH:-${GOPATH}/src/github.com/keptn-cdf-translator}
 pushd "$KEPTN_CDF_TRANSLATOR_PATH"
 ko apply -f config/
 popd
 
 echo "===> Install Keptn Outbound"
-CDF_EVENTS_KEPTN_ADAPTER_PATH=${CDF_EVENTS_KEPTN_ADAPTER_PATH:-${GOPATH}/src/github.com/salaboy/cdf-events-keptn-adapter}
+CDF_EVENTS_KEPTN_ADAPTER_PATH=${CDF_EVENTS_KEPTN_ADAPTER_PATH:-${GOPATH}/src/github.com/cdf-events-keptn-adapter}
 pushd "$CDF_EVENTS_KEPTN_ADAPTER_PATH"
 docker build --tag localhost:${reg_port}/cdevents/cdf-events-keptn-adapter:latest .
 docker push localhost:${reg_port}/cdevents/cdf-events-keptn-adapter:latest
@@ -335,7 +342,7 @@ pushd
 
 echo "===> Install Tekton CloudEvents controller"
 # Install the Tekton cloudevents experimental controller
-TEKTON_CLOUDEVENTS_PATH=${TEKTON_CLOUDEVENTS_PATH:-${GOPATH}/src/github.com/tektoncd/experimental/cloudevents}
+TEKTON_CLOUDEVENTS_PATH=${TEKTON_CLOUDEVENTS_PATH:-${GOPATH}/src/github.com/experimental/cloudevents}
 pushd "$TEKTON_CLOUDEVENTS_PATH"
 ko apply -f config/
 popd

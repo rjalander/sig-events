@@ -14,7 +14,7 @@ spec:
             - name: PLAYER_MODE
               value: KNATIVE
             - name: PLAYER_BROKER
-              value: default
+              value: events-broker
 ---
 apiVersion: eventing.knative.dev/v1
 kind: Trigger

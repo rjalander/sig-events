@@ -2,6 +2,7 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: build-artifact
+  namespace: cdevents
   annotations:
     description: |
       Build the container image of the Podtato Head service
@@ -118,6 +119,7 @@ spec:
         - name: version
           value: $(params.version)
         - name: uri
+          #value: $(params.target)/$(params.target-name)@$(tasks.image-build.results.IMAGE-DIGEST)
           value: $(params.target)/$(params.target-name)@$(tasks.image-build.results.IMAGE-DIGEST)
 ---
 apiVersion: tekton.dev/v1beta1
